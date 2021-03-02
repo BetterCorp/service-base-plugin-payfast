@@ -7,7 +7,6 @@ export default (): PayfastPluginConfig => {
     myHost: 'http://localhost',
     itnPath: '/Payfast/ITN',
     sandboxConfig: {
-      itnPath: '/Payfast/SandyITN',
       merchantId: '10021844',
       merchantKey: '5fua4woj28gkh',
       passphrase: 'uh_toot6RAID1gnup'

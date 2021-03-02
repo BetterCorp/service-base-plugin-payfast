@@ -85,5 +85,4 @@ export interface PayfastSandboxConfig {
   merchantId: string;
   merchantKey: string;
   passphrase?: string;
-  itnPath: string;
 }

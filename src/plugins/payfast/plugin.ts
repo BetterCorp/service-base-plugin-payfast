@@ -34,7 +34,7 @@ export class Plugin implements IPlugin {
             merchant_key: merchantConfig.merchantKey,
             return_url: data.data.returnUrl,
             cancel_url: data.data.cancelUrl,
-            notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + merchantConfig.itnPath,
+            notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + features.getPluginConfig<PayfastPluginConfig>().itnPath,
             name_first: data.data.firstName,
             name_last: data.data.lastName,
             email_address: data.data.email,
