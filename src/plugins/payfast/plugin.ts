@@ -21,13 +21,20 @@ export class Plugin implements IPlugin {
       features.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, async (resolve, reject, data: PayfastPaymentRequest) => {
         if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
+        let merchantConfig = features.getPluginConfig<PayfastPluginConfig>().sandboxConfig;
+        if (data.client.live === true) {
+          merchantConfig.merchantId = data.client.merchantId;
+          merchantConfig.merchantKey = data.client.merchantKey;
+          merchantConfig.passphrase = data.client.passphrase;
+        }
+
         try {
           let workingObj: any = {
-            merchant_id: data.client.merchantId,
-            merchant_key: data.client.merchantKey,
+            merchant_id: merchantConfig.merchantId,
+            merchant_key: merchantConfig.merchantKey,
             return_url: data.data.returnUrl,
             cancel_url: data.data.cancelUrl,
-            notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + features.getPluginConfig<PayfastPluginConfig>().itnPath,
+            notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + merchantConfig.itnPath,
             name_first: data.data.firstName,
             name_last: data.data.lastName,
             email_address: data.data.email,
@@ -53,8 +60,8 @@ export class Plugin implements IPlugin {
           for (let key of Object.keys(cleanObject)) {
             arrayToSignature.push(`${key}=${encodeURIComponent(cleanObject[key].trim())}`.replace(/%20/g, '+'));
           }
-          if (!Tools.isNullOrUndefined(data.client.passphrase)) {
-            arrayToSignature.push(`passphrase=${data.client.passphrase}`);
+          if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
+            arrayToSignature.push(`passphrase=${merchantConfig.passphrase}`);
           }
           arrayToSignature.sort();
           cleanObject.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
@@ -127,6 +134,8 @@ export class Plugin implements IPlugin {
             payfast_lastPaymentId.splice(50);
           }
           try {
+            let merchantSandboxConfig = features.getPluginConfig<PayfastPluginConfig>().sandboxConfig;
+
             let arrayToSignature = [];
             for (let key of Object.keys(req.data)) {
               if (key == 'signature') {
@@ -135,20 +144,26 @@ export class Plugin implements IPlugin {
               arrayToSignature.push(`${key}=${encodeURIComponent(req.data[key])}`);
             }
 
-            let secret = await features.emitEventAndReturn<PayfastGetSecretData, string | null | undefined>(req.data.custom_str4, PayFastSourcePluginEvents.getSecret, {
-              merchantId: req.data.merchant_id,
-              paymentReference: req.data.m_payment_id,
-              paymentInternalReference: req.data.custom_str5
-            })
-            if (!Tools.isNullOrUndefined(secret)) {
-              arrayToSignature.push(`passphrase=${secret}`);
+            if (req.data.m_payment_id === merchantSandboxConfig.merchantId) {
+              if (!Tools.isNullOrUndefined(merchantSandboxConfig.passphrase)) {
+                arrayToSignature.push(`passphrase=${merchantSandboxConfig.passphrase}`);
+              }
+            } else {
+              let secret = await features.emitEventAndReturn<PayfastGetSecretData, string | null | undefined>(req.data.custom_str4, PayFastSourcePluginEvents.getSecret, {
+                merchantId: req.data.merchant_id,
+                paymentReference: req.data.m_payment_id,
+                paymentInternalReference: req.data.custom_str5
+              });
+              if (!Tools.isNullOrUndefined(secret)) {
+                arrayToSignature.push(`passphrase=${secret}`);
+              }
             }
 
             let signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
             if (signature !== req.data.signature) {
               console.log('SIG FAILURE');
               return res.send(400);
-            }            
+            }
 
             switch (req.data.payment_status) {
               case 'COMPLETE': {
@@ -169,7 +184,7 @@ export class Plugin implements IPlugin {
                   lastName: req.data.name_last,
                   email: req.data.email_address,
                   cell: req.data.cell_number,
-                })
+                });
               } break;
             }
 

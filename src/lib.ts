@@ -54,8 +54,8 @@ export interface PayfastPaymentCompleteData {
 }
 
 export interface PayfastRecurringPaymentCompleteData extends PayfastPaymentCompleteData {
-  token: string
-  billingDate?: string
+  token: string;
+  billingDate?: string;
 }
 
 export enum PayFastPluginEvents {
@@ -73,9 +73,17 @@ export interface PayfastPluginConfig {
   sandboxUrl: string;
   myHost: string;
   itnPath: string;
+  sandboxConfig: PayfastSandboxConfig;
 }
 
 export interface PayfastPaymentRequestResponse {
   url: string;
   data: any;
+}
+
+export interface PayfastSandboxConfig {
+  merchantId: string;
+  merchantKey: string;
+  passphrase?: string;
+  itnPath: string;
 }

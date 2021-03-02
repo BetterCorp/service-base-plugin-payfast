@@ -5,6 +5,12 @@ export default (): PayfastPluginConfig => {
     liveUrl: 'https://www.payfast.co.za/eng/process',
     sandboxUrl: 'https://sandbox.payfast.co.za/eng/process',
     myHost: 'http://localhost',
-    itnPath: '/Payfast/ITN'
+    itnPath: '/Payfast/ITN',
+    sandboxConfig: {
+      itnPath: '/Payfast/SandyITN',
+      merchantId: '10021844',
+      merchantKey: '5fua4woj28gkh',
+      passphrase: 'uh_toot6RAID1gnup'
+    }
   };
 };
