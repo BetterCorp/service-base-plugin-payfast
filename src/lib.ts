@@ -74,3 +74,8 @@ export interface PayfastPluginConfig {
   myHost: string;
   itnPath: string;
 }
+
+export interface PayfastPaymentRequestResponse {
+  url: string;
+  data: any;
+}
