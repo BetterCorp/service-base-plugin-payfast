@@ -32,7 +32,6 @@ export interface PayfastPaymentRequestData {
   customData1?: String;
   customData2?: String;
   customData3?: String;
-  live: Boolean;
 }
 export interface PayfastPaymentCompleteData {
   merchantId: string;

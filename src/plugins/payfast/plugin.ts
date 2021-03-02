@@ -67,7 +67,7 @@ export class Plugin implements IPlugin {
           cleanObject.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
           resolve({
-            url: data.data.live ? features.getPluginConfig<PayfastPluginConfig>().liveUrl : features.getPluginConfig<PayfastPluginConfig>().sandboxUrl,
+            url: data.client.live ? features.getPluginConfig<PayfastPluginConfig>().liveUrl : features.getPluginConfig<PayfastPluginConfig>().sandboxUrl,
             data: cleanObject,
           });
         } catch (erc) {
