@@ -5,8 +5,7 @@ import Axios from 'axios';
 import * as crypto from 'crypto';
 
 export class Plugin implements IPlugin {
-  init (features: PluginFeature): Promise<void> {
-    let payfast_lastPaymentId: Array<string> = [];
+  init(features: PluginFeature): Promise<void> {
     return new Promise((resolve) => {
       features.onReturnableEvent(null, PayFastPluginEvents.ping, async (resolve, reject, data: any) => {
         if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
@@ -40,35 +39,43 @@ export class Plugin implements IPlugin {
             email_address: data.data.email,
             cell_number: data.data.cell,
             m_payment_id: data.data.paymentReference,
-            amount: `${data.data.amount.toFixed(2)}`,
-            item_name: data.data.itemName,
-            item_description: data.data.itemDescription,
-            custom_str1: data.data.customData1,
-            custom_str2: data.data.customData2,
-            custom_str3: data.data.customData3,
-            custom_str4: data.data.sourcePluginName,
-            custom_str5: data.data.paymentInternalReference,
-            payment_method: data.data.paymentMethod
+            amount: `${ data.data.amount.toFixed(2) }`,
+            item_name: data.data.itemName
           };
-          let cleanObject: any = {};
-          for (let key of Object.keys(workingObj)) {
-            if (workingObj[key] === undefined || workingObj[key] === null) continue;
-            cleanObject[key] = workingObj[key];
-          }
+
+          if (!Tools.isNullOrUndefined(data.data.itemDescription))
+            workingObj.item_description = data.data.itemDescription;
+          if (!Tools.isNullOrUndefined(data.data.customData1))
+            workingObj.custom_str1 = data.data.customData1;
+          if (!Tools.isNullOrUndefined(data.data.customData2))
+            workingObj.custom_str2 = data.data.customData2;
+          if (!Tools.isNullOrUndefined(data.data.customData3))
+            workingObj.custom_str3 = data.data.customData3;
+          if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
+            workingObj.custom_str4 = data.data.sourcePluginName;
+          if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
+            workingObj.custom_str5 = data.data.paymentInternalReference;
+          if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmation))
+            workingObj.email_confirmation = data.data.sendEmailConfirmation ? '1' : '0';
+          if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmationTo))
+            workingObj.confirmation_address = data.data.sendEmailConfirmationTo;
+          if (!Tools.isNullOrUndefined(data.data.paymentMethod))
+            workingObj.payment_method = data.data.paymentMethod;
 
           let arrayToSignature = [];
-          for (let key of Object.keys(cleanObject)) {
-            arrayToSignature.push(`${key}=${encodeURIComponent(cleanObject[key].trim())}`.replace(/%20/g, '+'));
+          for (let key of Object.keys(workingObj)) {
+            //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
+            arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
           }
           if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
-            arrayToSignature.push(`passphrase=${merchantConfig.passphrase}`);
+            arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
           }
           arrayToSignature.sort();
-          cleanObject.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
+          workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
           resolve({
             url: data.client.live ? features.getPluginConfig<PayfastPluginConfig>().liveUrl : features.getPluginConfig<PayfastPluginConfig>().sandboxUrl,
-            data: cleanObject,
+            data: workingObj,
           });
         } catch (erc) {
           features.log.error(erc);
@@ -127,7 +134,14 @@ export class Plugin implements IPlugin {
       //   }
       // });
 
-      features.initForPlugins('plugin-express', 'post', {
+      resolve();
+    });
+  }
+  loadedIndex: number = 999995;
+  loaded(features: PluginFeature): Promise<void> {
+    let payfast_lastPaymentId: Array<string> = [];
+    return new Promise((resolve) => {
+      features.log.debug(`loaded`); features.initForPlugins('plugin-express', 'post', {
         arg1: features.getPluginConfig<PayfastPluginConfig>().itnPath,
         arg2: async (req: any, res: any) => {
           if (payfast_lastPaymentId.length > 50) {
@@ -141,12 +155,12 @@ export class Plugin implements IPlugin {
               if (key == 'signature') {
                 continue;
               }
-              arrayToSignature.push(`${key}=${encodeURIComponent(req.data[key])}`);
+              arrayToSignature.push(`${ key }=${ encodeURIComponent(req.data[key]) }`);
             }
 
             if (req.data.m_payment_id === merchantSandboxConfig.merchantId) {
               if (!Tools.isNullOrUndefined(merchantSandboxConfig.passphrase)) {
-                arrayToSignature.push(`passphrase=${merchantSandboxConfig.passphrase}`);
+                arrayToSignature.push(`passphrase=${ merchantSandboxConfig.passphrase }`);
               }
             } else {
               let secret = await features.emitEventAndReturn<PayfastGetSecretData, string | null | undefined>(req.data.custom_str4, PayFastSourcePluginEvents.getSecret, {
@@ -155,7 +169,7 @@ export class Plugin implements IPlugin {
                 paymentInternalReference: req.data.custom_str5
               });
               if (!Tools.isNullOrUndefined(secret)) {
-                arrayToSignature.push(`passphrase=${secret}`);
+                arrayToSignature.push(`passphrase=${ secret }`);
               }
             }
 
@@ -195,7 +209,7 @@ export class Plugin implements IPlugin {
           }
         }
       });
-
+      features.log.debug('PAYFAST ITN READY');
       resolve();
     });
   }
