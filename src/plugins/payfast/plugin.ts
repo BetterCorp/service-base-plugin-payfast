@@ -97,7 +97,7 @@ export class Plugin implements IPlugin {
         try {
           let headers: any = {
             "merchant-id": merchantConfig.merchantId,
-            "timestamp": new Date().toISOString(),
+            "timestamp": new Date().toISOString().split('.')[0],
             "version": "v1",
           };
           let workingObj: any = {
