@@ -135,13 +135,15 @@ export class Plugin implements IPlugin {
           headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
-          features.log.debug(`MAKE PAYMENT REQ: ${features.getPluginConfig<PayfastPluginConfig>().adhocUrl.replace('{TOKEN}', data.data.token)}`);
-          features.log.debug(headers)
-          features.log.debug(workingObj)
+          features.log.debug(`MAKE PAYMENT REQ: ${ features.getPluginConfig<PayfastPluginConfig>().adhocUrl.replace('{TOKEN}', data.data.token) }`);
+          features.log.debug(headers);
+          features.log.debug(workingObj);
           Axios({
             url: features.getPluginConfig<PayfastPluginConfig>().adhocUrl.replace('{TOKEN}', data.data.token),
             method: 'POST',
-            data: workingObj,
+            data: Object.entries(workingObj)
+              .map((x: any) => `${ encodeURIComponent(x[0]) }=${ encodeURIComponent(x[1]) }`)
+              .join('&'),
             headers: headers
           }).then(x => {
             features.log.debug(x);
