@@ -2,6 +2,7 @@ import { PayfastPluginConfig } from '../../lib';
 
 export default (): PayfastPluginConfig => {
   return {
+    adhocUrl: 'https://api.payfast.co.za/subscriptions/{TOKEN}/adhoc',
     liveUrl: 'https://www.payfast.co.za/eng/process',
     sandboxUrl: 'https://sandbox.payfast.co.za/eng/process',
     myHost: 'http://localhost',

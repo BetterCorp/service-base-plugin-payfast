@@ -4,14 +4,14 @@ export interface IClientConfig {
   merchantKey: string;
   passphrase?: string;
 }
-export interface PayfastPaymentRequest {
-  data: PayfastPaymentRequestData;
-  client: IClientConfig;
-}
 export interface PayfastGetSecretData {
   merchantId: string;
   paymentReference: String;
   paymentInternalReference: String;
+}
+export interface PayfastPaymentRequest {
+  data: PayfastPaymentRequestData;
+  client: IClientConfig;
 }
 export interface PayfastPaymentRequestData {
   amount: Number;
@@ -52,6 +52,23 @@ export interface PayfastPaymentCompleteData {
   cell?: String;
 }
 
+export interface PayfastADHocPaymentRequest {
+  data: PayfastADHocPaymentRequestData;
+  client: IClientConfig;
+}
+export interface PayfastADHocPaymentRequestData {
+  token: string;
+  amount: Number;
+  paymentReference: String;
+  paymentInternalReference: String;
+  itemName: String;
+  itemDescription?: String;
+  sourcePluginName: String;
+  customData1?: String;
+  customData2?: String;
+  customData3?: String;
+}
+
 export interface PayfastRecurringPaymentCompleteData extends PayfastPaymentCompleteData {
   token: string;
   billingDate?: string;
@@ -59,7 +76,8 @@ export interface PayfastRecurringPaymentCompleteData extends PayfastPaymentCompl
 
 export enum PayFastPluginEvents {
   ping = 'ping',
-  getPaymentRequest = 'get-payment-request'
+  getPaymentRequest = 'get-payment-request',
+  performAdHocPayment = 'perform-adhoc-payment'
 }
 
 export enum PayFastSourcePluginEvents {
@@ -68,6 +86,7 @@ export enum PayFastSourcePluginEvents {
 }
 
 export interface PayfastPluginConfig {
+  adhocUrl: string;
   liveUrl: string;
   sandboxUrl: string;
   myHost: string;

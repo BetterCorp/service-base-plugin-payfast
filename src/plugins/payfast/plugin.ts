@@ -1,8 +1,9 @@
 import { IPlugin, PluginFeature } from '@bettercorp/service-base/lib/ILib';
 import { Tools } from '@bettercorp/tools/lib/Tools';
-import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFastSourcePluginEvents, PayfastGetSecretData, PayfastPaymentCompleteData } from '../../lib';
+import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFastSourcePluginEvents, PayfastGetSecretData, PayfastPaymentCompleteData, PayfastADHocPaymentRequest } from '../../lib';
 import Axios from 'axios';
 import * as crypto from 'crypto';
+import moment = require('moment');
 
 export class Plugin implements IPlugin {
   init(features: PluginFeature): Promise<void> {
@@ -77,6 +78,75 @@ export class Plugin implements IPlugin {
             url: data.client.live ? features.getPluginConfig<PayfastPluginConfig>().liveUrl : features.getPluginConfig<PayfastPluginConfig>().sandboxUrl,
             data: workingObj,
           });
+        } catch (erc) {
+          features.log.error(erc);
+          reject(erc);
+        }
+      });
+      features.onReturnableEvent(null, PayFastPluginEvents.performAdHocPayment, async (resolve, reject, data: PayfastADHocPaymentRequest) => {
+        if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
+
+        let merchantConfig = features.getPluginConfig<PayfastPluginConfig>().sandboxConfig;
+        if (data.client.live === true) {
+          merchantConfig.merchantId = data.client.merchantId;
+          merchantConfig.merchantKey = data.client.merchantKey;
+          merchantConfig.passphrase = data.client.passphrase;
+        } else {
+          return reject('No sandbox for ADHoc payments!');
+        }
+
+        try {
+          let headers: any = {
+            "merchant-id": merchantConfig.merchantId,
+            "timestamp": moment().format(),
+            "version": "v1",
+          };
+          let workingObj: any = {
+            notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + features.getPluginConfig<PayfastPluginConfig>().itnPath,
+            m_payment_id: data.data.paymentReference,
+            amount: `${ data.data.amount.toFixed(2) }`,
+            item_name: data.data.itemName
+          };
+
+          if (!Tools.isNullOrUndefined(data.data.itemDescription))
+            workingObj.item_description = data.data.itemDescription;
+          if (!Tools.isNullOrUndefined(data.data.customData1))
+            workingObj.custom_str1 = data.data.customData1;
+          if (!Tools.isNullOrUndefined(data.data.customData2))
+            workingObj.custom_str2 = data.data.customData2;
+          if (!Tools.isNullOrUndefined(data.data.customData3))
+            workingObj.custom_str3 = data.data.customData3;
+          if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
+            workingObj.custom_str4 = data.data.sourcePluginName;
+          if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
+            workingObj.custom_str5 = data.data.paymentInternalReference;
+
+          let arrayToSignature = [];
+          for (let key of Object.keys(headers)) {
+            arrayToSignature.push(`${ key }=${ encodeURIComponent(headers[key]) }`);
+          }
+          for (let key of Object.keys(workingObj)) {
+            arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+          }
+          if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
+            arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
+          }
+          arrayToSignature.sort();
+          headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
+          headers['Content-Type'] = 'application/x-www-form-urlencoded';
+
+          Axios({
+            url: features.getPluginConfig<PayfastPluginConfig>().adhocUrl.replace('{TOKEN}', data.data.token),
+            method: 'POST',
+            data: workingObj,
+            headers: headers
+          }).then(x => resolve({
+            status: x.status,
+            data: x.data
+          })).catch(x => reject({
+            status: x.status,
+            data: x.data
+          }));
         } catch (erc) {
           features.log.error(erc);
           reject(erc);
