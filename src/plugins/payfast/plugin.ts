@@ -4,17 +4,17 @@ import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFas
 import Axios from 'axios';
 import * as crypto from 'crypto';
 import * as EXPRESS from 'express';
-import { Request, Response } from 'express';
+const bodyParser = require('body-parser');
 
 export class Plugin implements IPlugin {
   init(features: PluginFeature): Promise<void> {
     return new Promise(async (resolve) => {
       await features.initForPlugins<any, void>('plugin-express', 'use', {
-        arg1: EXPRESS.json({ limit: '1mb' })
+        arg1: bodyParser.urlencoded({ extended: true })
       });
       await features.initForPlugins<any, void>('plugin-express', 'options', {
         arg1: '/*',
-        arg2: async (req: Request, res: Response): Promise<void> => {
+        arg2: async (req: EXPRESS.Request, res: EXPRESS.Response): Promise<void> => {
           res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
           res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST'].join(','));
           res.setHeader('Access-Control-Allow-Headers', ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'authorization', 'session'].join(','));
@@ -245,7 +245,7 @@ export class Plugin implements IPlugin {
             payfast_lastPaymentId.splice(50);
           }
           try {
-            features.log.debug('PAYFAST ITN RECEIVED')
+            features.log.debug('PAYFAST ITN RECEIVED');
             features.log.debug((req as any).data);
             features.log.debug(req.body);
             features.log.debug(req.headers);
