@@ -13,7 +13,7 @@ export class Plugin implements IPlugin {
         arg1: EXPRESS.json({ limit: '1mb' })
       });
       await features.initForPlugins<any, void>('plugin-express', 'options', {
-        arg1: features.getPluginConfig<PayfastPluginConfig>().itnPath,
+        arg1: '/*',
         arg2: async (req: Request, res: Response): Promise<void> => {
           res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
           res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST'].join(','));
@@ -240,30 +240,32 @@ export class Plugin implements IPlugin {
     return new Promise((resolve) => {
       features.log.debug(`loaded`); features.initForPlugins('plugin-express', 'post', {
         arg1: features.getPluginConfig<PayfastPluginConfig>().itnPath,
-        arg2: async (req: any, res: any) => {
+        arg2: async (req: Request, res: Response) => {
           if (payfast_lastPaymentId.length > 50) {
             payfast_lastPaymentId.splice(50);
           }
           try {
+            features.log.debug('PAYFAST ITN RECEIVED')
+            features.log.debug(req.body);
             let merchantSandboxConfig = features.getPluginConfig<PayfastPluginConfig>().sandboxConfig;
 
             let arrayToSignature = [];
-            for (let key of Object.keys(req.data)) {
+            for (let key of Object.keys(req.body)) {
               if (key == 'signature') {
                 continue;
               }
-              arrayToSignature.push(`${ key }=${ encodeURIComponent(req.data[key]) }`);
+              arrayToSignature.push(`${ key }=${ encodeURIComponent(req.body[key]) }`);
             }
 
-            if (req.data.m_payment_id === merchantSandboxConfig.merchantId) {
+            if (req.body.m_payment_id === merchantSandboxConfig.merchantId) {
               if (!Tools.isNullOrUndefined(merchantSandboxConfig.passphrase)) {
                 arrayToSignature.push(`passphrase=${ merchantSandboxConfig.passphrase }`);
               }
             } else {
-              let secret = await features.emitEventAndReturn<PayfastGetSecretData, string | null | undefined>(req.data.custom_str4, PayFastSourcePluginEvents.getSecret, {
-                merchantId: req.data.merchant_id,
-                paymentReference: req.data.m_payment_id,
-                paymentInternalReference: req.data.custom_str5
+              let secret = await features.emitEventAndReturn<PayfastGetSecretData, string | null | undefined>(req.body.custom_str4, PayFastSourcePluginEvents.getSecret, {
+                merchantId: req.body.merchant_id,
+                paymentReference: req.body.m_payment_id,
+                paymentInternalReference: req.body.custom_str5
               });
               if (!Tools.isNullOrUndefined(secret)) {
                 arrayToSignature.push(`passphrase=${ secret }`);
@@ -271,38 +273,38 @@ export class Plugin implements IPlugin {
             }
 
             let signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
-            if (signature !== req.data.signature) {
+            if (signature !== req.body.signature) {
               console.log('SIG FAILURE');
               return res.send(400);
             }
 
-            switch (req.data.payment_status) {
+            switch (req.body.payment_status) {
               case 'COMPLETE': {
-                features.emitEvent<PayfastPaymentCompleteData>(req.data.custom_str4, PayFastSourcePluginEvents.paymentComplete, {
-                  merchantId: req.data.merchant_id,
-                  paymentReference: req.data.m_payment_id,
-                  paymentId: req.data.pf_payment_id,
-                  itemName: req.data.item_name,
-                  itemDescription: req.data.item_description,
-                  grossAmount: req.data.amount_gross,
-                  feeAmount: req.data.amount_fee,
-                  netAmount: req.data.amount_net,
-                  customData1: req.data.custom_str1,
-                  customData2: req.data.custom_str2,
-                  customData3: req.data.custom_str3,
-                  paymentInternalReference: req.data.custom_str5,
-                  firstName: req.data.name_first,
-                  lastName: req.data.name_last,
-                  email: req.data.email_address,
-                  cell: req.data.cell_number,
+                features.emitEvent<PayfastPaymentCompleteData>(req.body.custom_str4, PayFastSourcePluginEvents.paymentComplete, {
+                  merchantId: req.body.merchant_id,
+                  paymentReference: req.body.m_payment_id,
+                  paymentId: req.body.pf_payment_id,
+                  itemName: req.body.item_name,
+                  itemDescription: req.body.item_description,
+                  grossAmount: req.body.amount_gross,
+                  feeAmount: req.body.amount_fee,
+                  netAmount: req.body.amount_net,
+                  customData1: req.body.custom_str1,
+                  customData2: req.body.custom_str2,
+                  customData3: req.body.custom_str3,
+                  paymentInternalReference: req.body.custom_str5,
+                  firstName: req.body.name_first,
+                  lastName: req.body.name_last,
+                  email: req.body.email_address,
+                  cell: req.body.cell_number,
                 });
               } break;
             }
 
-            res.send(200);
+            return res.send(200);
           } catch (exc) {
             features.log.error(exc);
-            res.send(500);
+            return res.send(500);
           }
         }
       });
