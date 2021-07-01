@@ -154,6 +154,8 @@ export class Plugin implements IPlugin {
             });
           }).catch(x => {
             features.log.error(x);
+            features.log.error(x.response);
+            features.log.error(x.response.data);
             reject({
               status: x.status,
               data: x.data
