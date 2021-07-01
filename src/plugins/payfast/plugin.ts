@@ -3,10 +3,24 @@ import { Tools } from '@bettercorp/tools/lib/Tools';
 import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFastSourcePluginEvents, PayfastGetSecretData, PayfastPaymentCompleteData, PayfastADHocPaymentRequest } from '../../lib';
 import Axios from 'axios';
 import * as crypto from 'crypto';
+import * as EXPRESS from 'express';
+import { Request, Response } from 'express';
 
 export class Plugin implements IPlugin {
   init(features: PluginFeature): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+      await features.initForPlugins<any, void>('plugin-express', 'use', {
+        arg1: EXPRESS.json({ limit: '1mb' })
+      });
+      await features.initForPlugins<any, void>('plugin-express', 'options', {
+        arg1: features.getPluginConfig<PayfastPluginConfig>().itnPath,
+        arg2: async (req: Request, res: Response): Promise<void> => {
+          res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
+          res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST'].join(','));
+          res.setHeader('Access-Control-Allow-Headers', ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'authorization', 'session'].join(','));
+          res.send(200);
+        }
+      });
       features.onReturnableEvent(null, PayFastPluginEvents.ping, async (resolve, reject, data: any) => {
         if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
