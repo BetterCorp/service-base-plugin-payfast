@@ -240,13 +240,15 @@ export class Plugin implements IPlugin {
     return new Promise((resolve) => {
       features.log.debug(`loaded`); features.initForPlugins('plugin-express', 'post', {
         arg1: features.getPluginConfig<PayfastPluginConfig>().itnPath,
-        arg2: async (req: Request, res: Response) => {
+        arg2: async (req: EXPRESS.Request, res: EXPRESS.Response) => {
           if (payfast_lastPaymentId.length > 50) {
             payfast_lastPaymentId.splice(50);
           }
           try {
             features.log.debug('PAYFAST ITN RECEIVED')
+            features.log.debug((req as any).data);
             features.log.debug(req.body);
+            features.log.debug(req.headers);
             let merchantSandboxConfig = features.getPluginConfig<PayfastPluginConfig>().sandboxConfig;
 
             let arrayToSignature = [];
