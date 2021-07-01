@@ -106,6 +106,7 @@ export class Plugin implements IPlugin {
             amount: Number.parseInt(`${ (data.data.amount * 100).toFixed(0) }`),
             item_name: data.data.itemName
           };
+          features.log.debug(`Performing ADHoc Payment request[${ merchantConfig.merchantId }]: ${ data.data.paymentReference } @${ workingObj.amount }`);
 
           if (!Tools.isNullOrUndefined(data.data.itemDescription))
             workingObj.item_description = data.data.itemDescription;
@@ -125,7 +126,10 @@ export class Plugin implements IPlugin {
             arrayToSignature.push(`${ key }=${ encodeURIComponent(headers[key]) }`);
           }
           for (let key of Object.keys(workingObj)) {
-            arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+            if (typeof workingObj[key] == 'number')
+              arrayToSignature.push(`${ key }=${ workingObj[key] }`);
+            else
+              arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
           }
           if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
             arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
