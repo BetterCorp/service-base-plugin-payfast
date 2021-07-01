@@ -3,7 +3,6 @@ import { Tools } from '@bettercorp/tools/lib/Tools';
 import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFastSourcePluginEvents, PayfastGetSecretData, PayfastPaymentCompleteData, PayfastADHocPaymentRequest } from '../../lib';
 import Axios from 'axios';
 import * as crypto from 'crypto';
-import moment = require('moment');
 
 export class Plugin implements IPlugin {
   init(features: PluginFeature): Promise<void> {
@@ -98,13 +97,13 @@ export class Plugin implements IPlugin {
         try {
           let headers: any = {
             "merchant-id": merchantConfig.merchantId,
-            "timestamp": moment().format(),
+            "timestamp": new Date().toISOString(),
             "version": "v1",
           };
           let workingObj: any = {
             notify_url: features.getPluginConfig<PayfastPluginConfig>().myHost + features.getPluginConfig<PayfastPluginConfig>().itnPath,
             m_payment_id: data.data.paymentReference,
-            amount: `${ data.data.amount.toFixed(2) }`,
+            amount: Number.parseInt(`${ (data.data.amount * 100).toFixed(0) }`),
             item_name: data.data.itemName
           };
 

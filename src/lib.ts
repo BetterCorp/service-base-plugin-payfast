@@ -58,7 +58,7 @@ export interface PayfastADHocPaymentRequest {
 }
 export interface PayfastADHocPaymentRequestData {
   token: string;
-  amount: Number;
+  amount: number;
   paymentReference: String;
   paymentInternalReference: String;
   itemName: String;
