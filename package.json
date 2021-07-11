@@ -10,7 +10,8 @@
     "start": "node lib/index.js",
     "build": "tsc",
     "deploy": "npm publish",
-    "xpostinstall": "node ../service-base/install-plugin.js"
+    "xpostinstall": "node ../service-base/install-plugin.js",
+    "version": "node ./node_modules/@bettercorp/service-base/build/version.js $0"
   },
   "files": [
     "lib/**/*",
@@ -19,14 +20,13 @@
   "main": "lib/index.js",
   "version": "1.0.19",
   "dependencies": {
-    "@bettercorp/service-base": "^4.0.0",
-    "@bettercorp/service-base-plugin-web-server": "^1.0.12",
-    "@bettercorp/tools": "^1.0.6",
-    "@types/request": "^2.48.5",
-    "@types/sax": "^1.2.1",
+    "@bettercorp/service-base": "^4.1.20210611133014",
+    "@bettercorp/service-base-plugin-web-server": "^1.0.20210611133214",
+    "@bettercorp/tools": "^1.1.20210611125606",
+    "@types/request": "^2.48.6",
+    "@types/sax": "^1.2.2",
     "axios": "^0.21.1",
     "body-parser": "^1.19.0",
-    "crypto": "^1.0.1",
     "json-checksum": "^0.1.4",
     "moment": "^2.29.1",
     "node-cache": "^5.1.2",
@@ -34,10 +34,10 @@
   },
   "devDependencies": {
     "@types/modesl": "^1.1.2",
-    "@types/node": "^14.14.31",
+    "@types/node": "^14.17.5",
     "ts-node": "^8.0.2",
     "tslint": "^5.12.0",
-    "typescript": "^3.9.9"
+    "typescript": "^3.9.10"
   },
   "bettercorp-service-base": {}
 }
