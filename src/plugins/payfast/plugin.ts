@@ -220,9 +220,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
     return new Promise(async (resolve) => {
       self.express = new express(self);
 
-      await self.express.use({
-        arg1: bodyParser.urlencoded({ extended: true })
-      });
+      await self.express.use(bodyParser.urlencoded({ extended: true }));
       await self.express.options('/*',
         async (req: EXPRESS.Request, res: EXPRESS.Response): Promise<void> => {
           res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
