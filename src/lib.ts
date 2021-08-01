@@ -25,7 +25,7 @@ export interface PayfastPaymentRequestData {
   paymentInternalReference: String;
   itemName: String;
   itemDescription?: String;
-  sourcePluginName: String;
+  sourcePluginName?: String;
   sendEmailConfirmation?: Boolean;
   sendEmailConfirmationTo?: String;
   paymentMethod?: string;
@@ -63,7 +63,7 @@ export interface PayfastADHocPaymentRequestData {
   paymentInternalReference: String;
   itemName: String;
   itemDescription?: String;
-  sourcePluginName: String;
+  sourcePluginName?: String;
   customData1?: String;
   customData2?: String;
   customData3?: String;
