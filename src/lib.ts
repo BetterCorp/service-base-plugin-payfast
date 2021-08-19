@@ -81,8 +81,8 @@ export enum PayFastPluginEvents {
 }
 
 export enum PayFastSourcePluginEvents {
-  getSecret = "get-secret",
-  paymentComplete = "payment-complete"
+  getSecret = "payfast-get-secret",
+  paymentComplete = "payfast-payment-complete"
 }
 
 export interface PayfastPluginConfig {
