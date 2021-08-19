@@ -1,0 +1,29 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width">
+</head>
+
+<body>
+  Please wait while we redirect you ...
+  <form id="payfastForm" action="#" method="POST" style="display: hidden">
+  </form>
+  <script>
+    if (window.self !== window.top) {
+      return window.top.location.href = window.location.href;
+    }
+    const variables = JSON.parse('{{VARIABLES}}');
+    //console.log(variables)
+    document.getElementById("payfastForm").setAttribute('action', variables.url);
+    let madeUpForm = '';
+    for (let field of Object.keys(variables.fields)) {
+      madeUpForm += `<input type="hidden" name="${field}" value="${variables.fields[field]}" />`;
+    }
+    document.getElementById("payfastForm").innerHTML = madeUpForm;
+    setTimeout(() => {
+      document.getElementById("payfastForm").submit();
+    }, 1000);
+  </script>
+</body>
+
+</html>

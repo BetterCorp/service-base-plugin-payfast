@@ -5,6 +5,9 @@ import Axios from 'axios';
 import * as crypto from 'crypto';
 import * as EXPRESS from 'express';
 import { express } from '@bettercorp/service-base-plugin-web-server/lib/plugins/express/express';
+import * as FS from 'fs';
+import * as PATH from 'path';
+import { eAndD } from './eAndD';
 const bodyParser = require('body-parser');
 
 export interface PayfastPaymentRequestResponse {
@@ -121,9 +124,24 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       arrayToSignature.sort();
       workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
-      resolve({
+      let requestKey = eAndD.encrypt(this, JSON.stringify({
         url: data.client.live ? this.getPluginConfig().liveUrl : this.getPluginConfig().sandboxUrl,
         data: workingObj,
+        random: crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex')
+      }));
+      resolve({
+        url: `${ this.getPluginConfig().myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
+        request: {
+          time: new Date().getTime(),
+          timeExpiry: 0,
+          amount: data.data.amount,
+          merchantId: workingObj.merchant_id,
+          firstName: workingObj.name_first,
+          lastName: workingObj.name_last,
+          email: workingObj.email_address,
+          cell: workingObj.cell_number,
+          paymentId: workingObj.m_payment_id
+        }
       });
     } catch (erc) {
       this.log.error(erc);
@@ -221,15 +239,45 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       self.express = new express(self);
 
       await self.express.use(bodyParser.urlencoded({ extended: true }));
-      await self.express.options('/*',
-        async (req: EXPRESS.Request, res: EXPRESS.Response): Promise<void> => {
-          res.setHeader('Access-Control-Allow-Origin', 'https://never.bettercorp.co.za/');
-          res.setHeader('Access-Control-Allow-Methods', ['OPTIONS', 'POST'].join(','));
-          res.setHeader('Access-Control-Allow-Headers', ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'authorization', 'session'].join(','));
-          res.send(200);
-        });
+      self.express.use(async (req: any, res: any, next: Function) => {
+        self.log.debug(`REQ[${ req.method }] ${ req.path } (${ JSON.stringify(req.query) })`);
+        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', '*');
+
+        if (req.method.toUpperCase() === 'OPTIONS')
+          return res.sendStatus(200);
+
+        next();
+      });
       self.express.post(self.getPluginConfig().itnPath, (a: any, b: any) => self.ITNPost(a, b));
       self.log.info('PAYFAST ITN READY');
+      self.express.get('/Payfast/:token', (req: any, res: any) => {
+        try {
+          /*const cipherText = Buffer.from(decodeURIComponent(req.params.token), "base64");
+          const cipher = crypto.createDecipheriv("aes-256-ccm", Buffer.from(features.getPluginConfig().commsToken, 'hex'), crypto.pseudoRandomBytes(6).toString('hex'), {
+              authTagLength: 16
+          });
+          let decrypted = Buffer.concat([cipher.update(cipherText), cipher.final()]).toString('utf8');*/
+          let decrypted = eAndD.decrypt(self, decodeURIComponent(req.params.token));
+          let data = JSON.parse(decrypted);
+          let now = new Date().getTime();
+          if (now >= data.timeExpiry)
+            throw 'Time expired!';
+          let content = FS.readFileSync(PATH.join(self.cwd, './node_modules/@bettercorp/service-base-plugin-payfast/content/payfast/index.html')).toString();
+          let variablesToClient = {
+            url: data.url,
+            fields: data.data
+          };
+          content = content.replace('{{VARIABLES}}', JSON.stringify(variablesToClient));
+          res.setHeader('content-type', 'text/html');
+          res.send(content);
+        }
+        catch (xcc) {
+          self.log.error(xcc);
+          res.status(400).send('An unknown error occurred');
+        }
+      });
 
       self.onReturnableEvent(null, PayFastPluginEvents.ping, (a) => self.ping(a));
       self.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, (a, b, c) => self.getPaymentRequest(a, b, c));
