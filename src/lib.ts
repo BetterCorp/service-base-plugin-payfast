@@ -89,6 +89,8 @@ export interface PayfastPluginConfig {
   adhocUrl: string;
   liveUrl: string;
   sandboxUrl: string;
+  commsToken: string;
+  commsTokenIV: string;
   myHost: string;
   itnPath: string;
   sandboxConfig: PayfastSandboxConfig;

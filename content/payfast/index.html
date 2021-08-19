@@ -5,24 +5,27 @@
 </head>
 
 <body>
-  Please wait while we redirect you ...
+  <span id="contentMsg">Please wait while we redirect you ...</span>
   <form id="payfastForm" action="#" method="POST" style="display: hidden">
   </form>
   <script>
     if (window.self !== window.top) {
-      return window.top.location.href = window.location.href;
+      document.getElementById('contentMsg').innerText = "You're in an iframe, we're going to fully redirect you... Please wait."
+      window.top.location.href = window.location.href;
+    } else {
+      const variables = JSON.parse('{{VARIABLES}}');
+      //console.log(variables)
+      document.getElementById("payfastForm").setAttribute('action', variables.url);
+      let madeUpForm = '';
+      for (let field of Object.keys(variables.fields)) {
+        madeUpForm += `<input type="hidden" name="${field}" value="${variables.fields[field]}" />`;
+      }
+      document.getElementById("payfastForm").innerHTML = madeUpForm;
+      document.getElementById('contentMsg').innerText = "One second please..."
+      setTimeout(() => {
+        document.getElementById("payfastForm").submit();
+      }, 1000);
     }
-    const variables = JSON.parse('{{VARIABLES}}');
-    //console.log(variables)
-    document.getElementById("payfastForm").setAttribute('action', variables.url);
-    let madeUpForm = '';
-    for (let field of Object.keys(variables.fields)) {
-      madeUpForm += `<input type="hidden" name="${field}" value="${variables.fields[field]}" />`;
-    }
-    document.getElementById("payfastForm").innerHTML = madeUpForm;
-    setTimeout(() => {
-      document.getElementById("payfastForm").submit();
-    }, 1000);
   </script>
 </body>
 
