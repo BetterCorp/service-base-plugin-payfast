@@ -9,8 +9,20 @@
   <form id="payfastForm" action="#" method="POST" style="display: hidden">
   </form>
   <script>
+    const postMessageUp = (msg, meta, errorMessage) => {
+      window.top.postMessage({
+        action: "PAYMENT-IFRAME",
+        message: msg,
+        meta,
+        errorMessage
+      }, '*')
+    };
     if (window.self !== window.top) {
-      document.getElementById('contentMsg').innerText = "You're in an iframe, we're going to fully redirect you... Please wait."
+      document.getElementById('contentMsg').innerText =
+        "You're in an iframe, we're going to fully redirect you... Please wait.";
+      postMessageUp('PAYMENT-REDIRECT', {
+        url: window.location.href
+      });
       window.top.location.href = window.location.href;
     } else {
       const variables = JSON.parse('{{VARIABLES}}');
@@ -25,6 +37,7 @@
       setTimeout(() => {
         document.getElementById("payfastForm").submit();
       }, 1000);
+      postMessageUp('PAYMENT-READY', true)
     }
   </script>
 </body>
