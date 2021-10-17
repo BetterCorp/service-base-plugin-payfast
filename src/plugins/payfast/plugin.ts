@@ -58,9 +58,9 @@ export class payfast extends CPluginClient<any> {
 export class Plugin extends CPlugin<PayfastPluginConfig> {
   express!: express;
 
-  private ping(resolve: Function) {
+  private async ping(resolve: Function) {
     const self = this;
-    Axios.post(self.getPluginConfig().liveUrl).then(x => {
+    Axios.post((await self.getPluginConfig()).liveUrl).then(x => {
       resolve(x.status === 400);
     }).catch(x => {
       self.log.error(x);
@@ -71,7 +71,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
   private async getPaymentRequest(resolve: Function, reject: Function, data: PayfastPaymentRequest) {
     if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
-    let merchantConfig = this.getPluginConfig().sandboxConfig;
+    let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
     if (data.client.live === true) {
       merchantConfig.merchantId = data.client.merchantId;
       merchantConfig.merchantKey = data.client.merchantKey;
@@ -84,7 +84,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         merchant_key: merchantConfig.merchantKey,
         return_url: data.data.returnUrl,
         cancel_url: data.data.cancelUrl,
-        notify_url: this.getPluginConfig().myHost + this.getPluginConfig().itnPath,
+        notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
         name_first: data.data.firstName,
         name_last: data.data.lastName,
         email_address: data.data.email,
@@ -124,13 +124,13 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       arrayToSignature.sort();
       workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
-      let requestKey = eAndD.encrypt(this, JSON.stringify({
-        url: data.client.live ? this.getPluginConfig().liveUrl : this.getPluginConfig().sandboxUrl,
+      let requestKey = await eAndD.encrypt(this, JSON.stringify({
+        url: data.client.live ? (await this.getPluginConfig()).liveUrl : (await this.getPluginConfig()).sandboxUrl,
         data: workingObj,
         random: crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex')
       }));
       resolve({
-        url: `${ this.getPluginConfig().myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
+        url: `${ (await this.getPluginConfig()).myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
         request: {
           time: new Date().getTime(),
           timeExpiry: 0,
@@ -151,7 +151,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
   private async performAdHocPayment(resolve: Function, reject: Function, data: PayfastADHocPaymentRequest) {
     if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
-    let merchantConfig = this.getPluginConfig().sandboxConfig;
+    let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
     if (data.client.live === true) {
       merchantConfig.merchantId = data.client.merchantId;
       merchantConfig.merchantKey = data.client.merchantKey;
@@ -167,7 +167,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         "version": "v1",
       };
       let workingObj: any = {
-        notify_url: this.getPluginConfig().myHost + this.getPluginConfig().itnPath,
+        notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
         m_payment_id: data.data.paymentReference,
         amount: `${ (data.data.amount * 100).toFixed(0) }`,
         item_name: data.data.itemName
@@ -201,12 +201,12 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
-      this.log.debug(`MAKE PAYMENT REQ: ${ this.getPluginConfig().adhocUrl.replace('{TOKEN}', data.data.token) }`);
+      this.log.debug(`MAKE PAYMENT REQ: ${ (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token) }`);
       this.log.debug(headers);
       this.log.debug(workingObj);
       const self = this;
       Axios({
-        url: this.getPluginConfig<PayfastPluginConfig>().adhocUrl.replace('{TOKEN}', data.data.token),
+        url: (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token),
         method: 'POST',
         data: Object.entries(workingObj)
           .map((x: any) => `${ encodeURIComponent(x[0]) }=${ encodeURIComponent(x[1]) }`)
@@ -250,16 +250,16 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
 
         next();
       });
-      self.express.post(self.getPluginConfig().itnPath, (a: any, b: any) => self.ITNPost(a, b));
+      self.express.post((await self.getPluginConfig()).itnPath, (a: any, b: any) => self.ITNPost(a, b));
       self.log.info('PAYFAST ITN READY');
-      self.express.get('/Payfast/:token', (req: any, res: any) => {
+      self.express.get('/Payfast/:token', async (req: any, res: any) => {
         try {
           /*const cipherText = Buffer.from(decodeURIComponent(req.params.token), "base64");
           const cipher = crypto.createDecipheriv("aes-256-ccm", Buffer.from(features.getPluginConfig().commsToken, 'hex'), crypto.pseudoRandomBytes(6).toString('hex'), {
               authTagLength: 16
           });
           let decrypted = Buffer.concat([cipher.update(cipherText), cipher.final()]).toString('utf8');*/
-          let decrypted = eAndD.decrypt(self, decodeURIComponent(req.params.token));
+          let decrypted = await eAndD.decrypt(self, decodeURIComponent(req.params.token));
           let data = JSON.parse(decrypted);
           let now = new Date().getTime();
           if (now >= data.timeExpiry)
@@ -279,7 +279,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         }
       });
 
-      self.onReturnableEvent(null, PayFastPluginEvents.ping, (a) => self.ping(a));
+      self.onReturnableEvent(null, PayFastPluginEvents.ping, async (a) => await self.ping(a));
       self.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, (a, b, c) => self.getPaymentRequest(a, b, c));
       self.onReturnableEvent(null, PayFastPluginEvents.performAdHocPayment, (a, b, c) => self.performAdHocPayment(a, b, c));
 
@@ -349,7 +349,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       this.log.debug((req as any).data);
       this.log.debug(req.body);
       this.log.debug(req.headers);
-      let merchantSandboxConfig = this.getPluginConfig().sandboxConfig;
+      let merchantSandboxConfig = (await this.getPluginConfig()).sandboxConfig;
 
       let arrayToSignature = [];
       for (let key of Object.keys(req.body)) {
