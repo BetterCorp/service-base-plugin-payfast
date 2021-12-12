@@ -18,19 +18,19 @@
   "main": "lib/index.js",
   "version": "2.0.0",
   "dependencies": {
-    "@bettercorp/service-base": "^6.0.20211202210019",
-    "@bettercorp/service-base-plugin-web-server": "^3.2.20211120183734",
+    "@bettercorp/service-base": "^6.0.20211212163555",
+    "@bettercorp/service-base-plugin-web-server": "^3.2.20211208030106",
     "@bettercorp/tools": "^1.2.20211118015545",
     "axios": "^0.23.0",
-    "body-parser": "^1.19.0"
+    "body-parser": "^1.19.1"
   },
   "devDependencies": {
-    "@types/node": "^16.11.11",
-    "@typescript-eslint/eslint-plugin": "^5.5.0",
-    "@typescript-eslint/parser": "^5.5.0",
-    "eslint": "^8.4.0",
+    "@types/node": "^16.11.12",
+    "@typescript-eslint/eslint-plugin": "^5.6.0",
+    "@typescript-eslint/parser": "^5.6.0",
+    "eslint": "^8.4.1",
     "ts-node": "^10.4.0",
-    "typescript": "^4.5.2"
+    "typescript": "^4.5.3"
   },
   "bsb_project": true
 }
