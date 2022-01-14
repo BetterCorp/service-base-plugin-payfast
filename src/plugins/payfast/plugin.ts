@@ -1,4 +1,4 @@
-import { CPlugin, CPluginClient, IPlugin } from '@bettercorp/service-base/lib/ILib';
+import { CPlugin, CPluginClient, IPlugin } from '@bettercorp/service-base/lib/interfaces/plugins';
 import { Tools } from '@bettercorp/tools/lib/Tools';
 import { PayFastPluginEvents, PayfastPaymentRequest, PayfastPluginConfig, PayFastSourcePluginEvents, PayfastGetSecretData, PayfastPaymentCompleteData, PayfastADHocPaymentRequest } from '../../lib';
 import Axios from 'axios';
@@ -68,169 +68,173 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
     });
   }
 
-  private async getPaymentRequest(resolve: Function, reject: Function, data: PayfastPaymentRequest) {
-    if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
+  private async getPaymentRequest(data: PayfastPaymentRequest) {
+    return new Promise(async (resolve, reject) => {
+      if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
-    let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
-    if (data.client.live === true) {
-      merchantConfig.merchantId = data.client.merchantId;
-      merchantConfig.merchantKey = data.client.merchantKey;
-      merchantConfig.passphrase = data.client.passphrase;
-    }
-
-    try {
-      let workingObj: any = {
-        merchant_id: merchantConfig.merchantId,
-        merchant_key: merchantConfig.merchantKey,
-        return_url: data.data.returnUrl,
-        cancel_url: data.data.cancelUrl,
-        notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
-        name_first: data.data.firstName,
-        name_last: data.data.lastName,
-        email_address: data.data.email,
-        cell_number: data.data.cell,
-        m_payment_id: data.data.paymentReference,
-        amount: `${ data.data.amount.toFixed(2) }`,
-        item_name: data.data.itemName
-      };
-
-      if (!Tools.isNullOrUndefined(data.data.itemDescription))
-        workingObj.item_description = data.data.itemDescription;
-      if (!Tools.isNullOrUndefined(data.data.customData1))
-        workingObj.custom_str1 = data.data.customData1;
-      if (!Tools.isNullOrUndefined(data.data.customData2))
-        workingObj.custom_str2 = data.data.customData2;
-      if (!Tools.isNullOrUndefined(data.data.customData3))
-        workingObj.custom_str3 = data.data.customData3;
-      if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
-        workingObj.custom_str4 = data.data.sourcePluginName;
-      if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
-        workingObj.custom_str5 = data.data.paymentInternalReference;
-      if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmation))
-        workingObj.email_confirmation = data.data.sendEmailConfirmation ? '1' : '0';
-      if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmationTo))
-        workingObj.confirmation_address = data.data.sendEmailConfirmationTo;
-      if (!Tools.isNullOrUndefined(data.data.paymentMethod))
-        workingObj.payment_method = data.data.paymentMethod;
-
-      let arrayToSignature = [];
-      for (let key of Object.keys(workingObj)) {
-        //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
-        arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+      let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
+      if (data.client.live === true) {
+        merchantConfig.merchantId = data.client.merchantId;
+        merchantConfig.merchantKey = data.client.merchantKey;
+        merchantConfig.passphrase = data.client.passphrase;
       }
-      if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
-        arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
-      }
-      arrayToSignature.sort();
-      workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
-      let requestKey = await eAndD.encrypt(this, JSON.stringify({
-        url: data.client.live ? (await this.getPluginConfig()).liveUrl : (await this.getPluginConfig()).sandboxUrl,
-        data: workingObj,
-        random: crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex')
-      }));
-      resolve({
-        url: `${ (await this.getPluginConfig()).myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
-        request: {
-          time: new Date().getTime(),
-          timeExpiry: 0,
-          amount: data.data.amount,
-          merchantId: workingObj.merchant_id,
-          firstName: workingObj.name_first,
-          lastName: workingObj.name_last,
-          email: workingObj.email_address,
-          cell: workingObj.cell_number,
-          paymentId: workingObj.m_payment_id
+      try {
+        let workingObj: any = {
+          merchant_id: merchantConfig.merchantId,
+          merchant_key: merchantConfig.merchantKey,
+          return_url: data.data.returnUrl,
+          cancel_url: data.data.cancelUrl,
+          notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
+          name_first: data.data.firstName,
+          name_last: data.data.lastName,
+          email_address: data.data.email,
+          cell_number: data.data.cell,
+          m_payment_id: data.data.paymentReference,
+          amount: `${ data.data.amount.toFixed(2) }`,
+          item_name: data.data.itemName
+        };
+
+        if (!Tools.isNullOrUndefined(data.data.itemDescription))
+          workingObj.item_description = data.data.itemDescription;
+        if (!Tools.isNullOrUndefined(data.data.customData1))
+          workingObj.custom_str1 = data.data.customData1;
+        if (!Tools.isNullOrUndefined(data.data.customData2))
+          workingObj.custom_str2 = data.data.customData2;
+        if (!Tools.isNullOrUndefined(data.data.customData3))
+          workingObj.custom_str3 = data.data.customData3;
+        if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
+          workingObj.custom_str4 = data.data.sourcePluginName;
+        if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
+          workingObj.custom_str5 = data.data.paymentInternalReference;
+        if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmation))
+          workingObj.email_confirmation = data.data.sendEmailConfirmation ? '1' : '0';
+        if (!Tools.isNullOrUndefined(data.data.sendEmailConfirmationTo))
+          workingObj.confirmation_address = data.data.sendEmailConfirmationTo;
+        if (!Tools.isNullOrUndefined(data.data.paymentMethod))
+          workingObj.payment_method = data.data.paymentMethod;
+
+        let arrayToSignature = [];
+        for (let key of Object.keys(workingObj)) {
+          //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
+          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
         }
-      });
-    } catch (erc) {
-      this.log.error(erc);
-      reject(erc);
-    }
-  }
-  private async performAdHocPayment(resolve: Function, reject: Function, data: PayfastADHocPaymentRequest) {
-    if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
+        if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
+          arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
+        }
+        arrayToSignature.sort();
+        workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
-    let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
-    if (data.client.live === true) {
-      merchantConfig.merchantId = data.client.merchantId;
-      merchantConfig.merchantKey = data.client.merchantKey;
-      merchantConfig.passphrase = data.client.passphrase;
-    } else {
-      return reject('No sandbox for ADHoc payments!');
-    }
-
-    try {
-      let headers: any = {
-        "merchant-id": merchantConfig.merchantId,
-        "timestamp": new Date().toISOString().split('.')[0],
-        "version": "v1",
-      };
-      let workingObj: any = {
-        notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
-        m_payment_id: data.data.paymentReference,
-        amount: `${ (data.data.amount * 100).toFixed(0) }`,
-        item_name: data.data.itemName
-      };
-      this.log.info(`Performing ADHoc Payment request[${ merchantConfig.merchantId }]: ${ data.data.paymentReference } @${ workingObj.amount }`);
-
-      if (!Tools.isNullOrUndefined(data.data.itemDescription))
-        workingObj.item_description = data.data.itemDescription;
-      if (!Tools.isNullOrUndefined(data.data.customData1))
-        workingObj.custom_str1 = data.data.customData1;
-      if (!Tools.isNullOrUndefined(data.data.customData2))
-        workingObj.custom_str2 = data.data.customData2;
-      if (!Tools.isNullOrUndefined(data.data.customData3))
-        workingObj.custom_str3 = data.data.customData3;
-      if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
-        workingObj.custom_str4 = data.data.sourcePluginName;
-      if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
-        workingObj.custom_str5 = data.data.paymentInternalReference;
-
-      let arrayToSignature = [];
-      for (let key of Object.keys(headers)) {
-        arrayToSignature.push(`${ key }=${ encodeURIComponent(headers[key]) }`);
-      }
-      for (let key of Object.keys(workingObj)) {
-        arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
-      }
-      if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
-        arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
-      }
-      arrayToSignature.sort();
-      headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
-      headers['Content-Type'] = 'application/x-www-form-urlencoded';
-
-      this.log.debug(`MAKE PAYMENT REQ: ${ (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token) }`);
-      this.log.debug(headers);
-      this.log.debug(workingObj);
-      const self = this;
-      Axios({
-        url: (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token),
-        method: 'POST',
-        data: Object.entries(workingObj)
-          .map((x: any) => `${ encodeURIComponent(x[0]) }=${ encodeURIComponent(x[1]) }`)
-          .join('&'),
-        headers: headers
-      }).then(x => {
-        self.log.debug(x);
+        let requestKey = await eAndD.encrypt(this, JSON.stringify({
+          url: data.client.live ? (await this.getPluginConfig()).liveUrl : (await this.getPluginConfig()).sandboxUrl,
+          data: workingObj,
+          random: crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex')
+        }));
         resolve({
-          status: x.status,
-          data: x.data
+          url: `${ (await this.getPluginConfig()).myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
+          request: {
+            time: new Date().getTime(),
+            timeExpiry: 0,
+            amount: data.data.amount,
+            merchantId: workingObj.merchant_id,
+            firstName: workingObj.name_first,
+            lastName: workingObj.name_last,
+            email: workingObj.email_address,
+            cell: workingObj.cell_number,
+            paymentId: workingObj.m_payment_id
+          }
         });
-      }).catch(x => {
-        self.log.error(x);
-        self.log.error(x.response);
-        self.log.error(x.response.data);
-        reject({
-          status: x.response.status,
-          data: x.response.data
+      } catch (erc) {
+        this.log.error(erc);
+        reject(erc);
+      }
+    });
+  }
+  private async performAdHocPayment(data: PayfastADHocPaymentRequest) {
+    return new Promise(async (resolve, reject) => {
+      if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
+
+      let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
+      if (data.client.live === true) {
+        merchantConfig.merchantId = data.client.merchantId;
+        merchantConfig.merchantKey = data.client.merchantKey;
+        merchantConfig.passphrase = data.client.passphrase;
+      } else {
+        return reject('No sandbox for ADHoc payments!');
+      }
+
+      try {
+        let headers: any = {
+          "merchant-id": merchantConfig.merchantId,
+          "timestamp": new Date().toISOString().split('.')[0],
+          "version": "v1",
+        };
+        let workingObj: any = {
+          notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
+          m_payment_id: data.data.paymentReference,
+          amount: `${ (data.data.amount * 100).toFixed(0) }`,
+          item_name: data.data.itemName
+        };
+        this.log.info(`Performing ADHoc Payment request[${ merchantConfig.merchantId }]: ${ data.data.paymentReference } @${ workingObj.amount }`);
+
+        if (!Tools.isNullOrUndefined(data.data.itemDescription))
+          workingObj.item_description = data.data.itemDescription;
+        if (!Tools.isNullOrUndefined(data.data.customData1))
+          workingObj.custom_str1 = data.data.customData1;
+        if (!Tools.isNullOrUndefined(data.data.customData2))
+          workingObj.custom_str2 = data.data.customData2;
+        if (!Tools.isNullOrUndefined(data.data.customData3))
+          workingObj.custom_str3 = data.data.customData3;
+        if (!Tools.isNullOrUndefined(data.data.sourcePluginName))
+          workingObj.custom_str4 = data.data.sourcePluginName;
+        if (!Tools.isNullOrUndefined(data.data.paymentInternalReference))
+          workingObj.custom_str5 = data.data.paymentInternalReference;
+
+        let arrayToSignature = [];
+        for (let key of Object.keys(headers)) {
+          arrayToSignature.push(`${ key }=${ encodeURIComponent(headers[key]) }`);
+        }
+        for (let key of Object.keys(workingObj)) {
+          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+        }
+        if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
+          arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
+        }
+        arrayToSignature.sort();
+        headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+
+        this.log.debug(`MAKE PAYMENT REQ: ${ (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token) }`);
+        this.log.debug(headers);
+        this.log.debug(workingObj);
+        const self = this;
+        Axios({
+          url: (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token),
+          method: 'POST',
+          data: Object.entries(workingObj)
+            .map((x: any) => `${ encodeURIComponent(x[0]) }=${ encodeURIComponent(x[1]) }`)
+            .join('&'),
+          headers: headers
+        }).then(x => {
+          self.log.debug(x);
+          resolve({
+            status: x.status,
+            data: x.data
+          });
+        }).catch(x => {
+          self.log.error(x);
+          self.log.error(x.response);
+          self.log.error(x.response.data);
+          reject({
+            status: x.response.status,
+            data: x.response.data
+          });
         });
-      });
-    } catch (erc) {
-      this.log.error(erc);
-      reject(erc);
-    }
+      } catch (erc) {
+        this.log.error(erc);
+        reject(erc);
+      }
+    });
   }
 
   init(): Promise<void> {
@@ -280,8 +284,8 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       });
 
       self.onReturnableEvent(null, PayFastPluginEvents.ping, async (a) => await self.ping(a));
-      self.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, (a, b, c) => self.getPaymentRequest(a, b, c));
-      self.onReturnableEvent(null, PayFastPluginEvents.performAdHocPayment, (a, b, c) => self.performAdHocPayment(a, b, c));
+      self.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, (data) => self.getPaymentRequest(data));
+      self.onReturnableEvent(null, PayFastPluginEvents.performAdHocPayment, (data) => self.performAdHocPayment(data));
 
       // features.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, async (resolve, reject, data: PayfastPaymentRequest) => {
       //   if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
