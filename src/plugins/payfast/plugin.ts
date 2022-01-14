@@ -69,10 +69,11 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
   }
 
   private async getPaymentRequest(data: PayfastPaymentRequest) {
+    const self = this;
     return new Promise(async (resolve, reject) => {
       if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
-      let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
+      let merchantConfig = (await self.getPluginConfig()).sandboxConfig;
       if (data.client.live === true) {
         merchantConfig.merchantId = data.client.merchantId;
         merchantConfig.merchantKey = data.client.merchantKey;
@@ -85,7 +86,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
           merchant_key: merchantConfig.merchantKey,
           return_url: data.data.returnUrl,
           cancel_url: data.data.cancelUrl,
-          notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
+          notify_url: (await self.getPluginConfig()).myHost + (await self.getPluginConfig()).itnPath,
           name_first: data.data.firstName,
           name_last: data.data.lastName,
           email_address: data.data.email,
@@ -125,13 +126,13 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         arrayToSignature.sort();
         workingObj.signature = crypto.createHash('md5').update(arrayToSignature.join('&')).digest("hex");
 
-        let requestKey = await eAndD.encrypt(this, JSON.stringify({
-          url: data.client.live ? (await this.getPluginConfig()).liveUrl : (await this.getPluginConfig()).sandboxUrl,
+        let requestKey = await eAndD.encrypt(self, JSON.stringify({
+          url: data.client.live ? (await self.getPluginConfig()).liveUrl : (await self.getPluginConfig()).sandboxUrl,
           data: workingObj,
           random: crypto.randomBytes(Math.floor((Math.random() * 100) + 1)).toString('hex')
         }));
         resolve({
-          url: `${ (await this.getPluginConfig()).myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
+          url: `${ (await self.getPluginConfig()).myHost }/Payfast/${ encodeURIComponent(requestKey) }`,
           request: {
             time: new Date().getTime(),
             timeExpiry: 0,
@@ -145,16 +146,17 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
           }
         });
       } catch (erc) {
-        this.log.error(erc);
+        self.log.error(erc);
         reject(erc);
       }
     });
   }
   private async performAdHocPayment(data: PayfastADHocPaymentRequest) {
+    const self = this;
     return new Promise(async (resolve, reject) => {
       if (Tools.isNullOrUndefined(data)) return reject('DATA UNDEFINED');
 
-      let merchantConfig = (await this.getPluginConfig()).sandboxConfig;
+      let merchantConfig = (await self.getPluginConfig()).sandboxConfig;
       if (data.client.live === true) {
         merchantConfig.merchantId = data.client.merchantId;
         merchantConfig.merchantKey = data.client.merchantKey;
@@ -170,12 +172,12 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
           "version": "v1",
         };
         let workingObj: any = {
-          notify_url: (await this.getPluginConfig()).myHost + (await this.getPluginConfig()).itnPath,
+          notify_url: (await self.getPluginConfig()).myHost + (await self.getPluginConfig()).itnPath,
           m_payment_id: data.data.paymentReference,
           amount: `${ (data.data.amount * 100).toFixed(0) }`,
           item_name: data.data.itemName
         };
-        this.log.info(`Performing ADHoc Payment request[${ merchantConfig.merchantId }]: ${ data.data.paymentReference } @${ workingObj.amount }`);
+        self.log.info(`Performing ADHoc Payment request[${ merchantConfig.merchantId }]: ${ data.data.paymentReference } @${ workingObj.amount }`);
 
         if (!Tools.isNullOrUndefined(data.data.itemDescription))
           workingObj.item_description = data.data.itemDescription;
@@ -204,10 +206,9 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         headers.signature = crypto.createHash('md5').update(arrayToSignature.join('&').replace(/%20/g, '+')).digest("hex");
         headers['Content-Type'] = 'application/x-www-form-urlencoded';
 
-        this.log.debug(`MAKE PAYMENT REQ: ${ (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token) }`);
-        this.log.debug(headers);
-        this.log.debug(workingObj);
-        const self = this;
+        self.log.debug(`MAKE PAYMENT REQ: ${ (await self.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token) }`);
+        self.log.debug(headers);
+        self.log.debug(workingObj);
         Axios({
           url: (await this.getPluginConfig()).adhocUrl.replace('{TOKEN}', data.data.token),
           method: 'POST',
