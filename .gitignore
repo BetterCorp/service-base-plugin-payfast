@@ -2,3 +2,6 @@
 node_modules
 /_exports
 /sec.config.json
+/node_modules
+/junit.xml
+/test-file-*
