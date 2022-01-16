@@ -6,50 +6,50 @@ export interface IClientConfig {
 }
 export interface PayfastGetSecretData {
   merchantId: string;
-  paymentReference: String;
-  paymentInternalReference: String;
+  paymentReference: string;
+  paymentInternalReference: string;
 }
 export interface PayfastPaymentRequest {
   data: PayfastPaymentRequestData;
   client: IClientConfig;
 }
 export interface PayfastPaymentRequestData {
-  amount: Number;
-  cancelUrl: String;
-  returnUrl: String;
-  firstName?: String;
-  lastName?: String;
-  email?: String;
-  cell?: String;
-  paymentReference: String;
-  paymentInternalReference: String;
-  itemName: String;
-  itemDescription?: String;
-  sourcePluginName?: String;
+  amount: number;
+  cancelUrl: string;
+  returnUrl: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  cell?: string;
+  paymentReference: string;
+  paymentInternalReference: string;
+  itemName: string;
+  itemDescription?: string;
+  sourcePluginName?: string;
   sendEmailConfirmation?: Boolean;
-  sendEmailConfirmationTo?: String;
+  sendEmailConfirmationTo?: string;
   paymentMethod?: string;
-  customData1?: String;
-  customData2?: String;
-  customData3?: String;
+  customData1?: string;
+  customData2?: string;
+  customData3?: string;
 }
 export interface PayfastPaymentCompleteData {
   merchantId: string;
-  paymentReference: String;
-  paymentId: String;
-  itemName: String;
-  itemDescription?: String;
-  grossAmount: Number;
-  feeAmount: Number;
-  netAmount: Number;
-  customData1?: String;
-  customData2?: String;
-  customData3?: String;
-  paymentInternalReference: String;
-  firstName?: String;
-  lastName?: String;
-  email?: String;
-  cell?: String;
+  paymentReference: string;
+  paymentId: string;
+  itemName: string;
+  itemDescription?: string;
+  grossAmount: number;
+  feeAmount: number;
+  netAmount: number;
+  customData1?: string;
+  customData2?: string;
+  customData3?: string;
+  paymentInternalReference: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  cell?: string;
 }
 
 export interface PayfastADHocPaymentRequest {
@@ -59,14 +59,14 @@ export interface PayfastADHocPaymentRequest {
 export interface PayfastADHocPaymentRequestData {
   token: string;
   amount: number;
-  paymentReference: String;
-  paymentInternalReference: String;
-  itemName: String;
-  itemDescription?: String;
-  sourcePluginName?: String;
-  customData1?: String;
-  customData2?: String;
-  customData3?: String;
+  paymentReference: string;
+  paymentInternalReference: string;
+  itemName: string;
+  itemDescription?: string;
+  sourcePluginName?: string;
+  customData1?: string;
+  customData2?: string;
+  customData3?: string;
 }
 
 export interface PayfastRecurringPaymentCompleteData extends PayfastPaymentCompleteData {
