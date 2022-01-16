@@ -23,7 +23,6 @@ export interface PayfastGetSecret {
   paymentReference: string;
   paymentInternalReference: string;
 }
-export type PromiseResolve<TData = any, TReturn = void> = (data: TData) => TReturn;
 export class payfast extends CPluginClient<any> {
   public readonly _pluginName: string = "payfast";
   private _refPluginName: string;
@@ -46,8 +45,8 @@ export class payfast extends CPluginClient<any> {
     return this.emitEventAndReturn(PayFastPluginEvents.performAdHocPayment, request);
   }
 
-  async onGetSecret(listener: (resolve: PromiseResolve<string, void>, reject: PromiseResolve<any, void>, request: PayfastGetSecret) => void) {
-    this.refPlugin.onReturnableEvent(this._refPluginName, PayFastSourcePluginEvents.getSecret, listener as any);
+  async onGetSecret(listener: (request?: PayfastGetSecret) => Promise<string>) {
+    this.refPlugin.onReturnableEvent<PayfastGetSecret, string>(this._refPluginName, PayFastSourcePluginEvents.getSecret, listener);
   }
 
   async onPaymentComplete(listener: (response: PayfastPaymentCompleteData) => void) {
