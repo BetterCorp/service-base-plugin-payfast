@@ -117,6 +117,8 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         let arrayToSignature = [];
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
+          if (!Tools.isFunction(workingObj[key].trim)) continue;
+
           //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
           arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
         }
@@ -198,6 +200,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         }
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
+          if (!Tools.isFunction(workingObj[key].trim)) continue;
           arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
         }
         if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
