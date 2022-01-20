@@ -8,6 +8,7 @@ import { express } from '@bettercorp/service-base-plugin-web-server/lib/plugins/
 import * as FS from 'fs';
 import * as PATH from 'path';
 import { eAndD } from './eAndD';
+import { IDictionary } from '@bettercorp/tools/lib/Interfaces';
 const bodyParser = require('body-parser');
 
 export interface PayfastPaymentRequestResponse {
@@ -86,14 +87,21 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
           return_url: data.data.returnUrl,
           cancel_url: data.data.cancelUrl,
           notify_url: (await self.getPluginConfig()).myHost + (await self.getPluginConfig()).itnPath,
-          name_first: data.data.firstName,
-          name_last: data.data.lastName,
-          email_address: data.data.email,
-          cell_number: data.data.cell,
-          m_payment_id: data.data.paymentReference,
           amount: `${ data.data.amount.toFixed(2) }`,
           item_name: data.data.itemName
         };
+        let optionalFields: IDictionary<string> = {
+          firstName: 'name_first',
+          lastName: 'name_last',
+          email: 'email_address',
+          cell: 'cell_number',
+          paymentReference: 'm_payment_id',
+        };
+        for (let field of Object.keys(optionalFields)) {
+          if (Tools.isNullOrUndefined((data.data as any)[field])) continue;
+          if ((data.data as any)[field] === '') continue;
+          workingObj[optionalFields[field]] = (data.data as any)[field].substring(0, 100);
+        }
 
         if (!Tools.isNullOrUndefined(data.data.itemDescription))
           workingObj.item_description = data.data.itemDescription;
@@ -118,9 +126,11 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
           if (!Tools.isFunction(workingObj[key].trim)) continue;
+          let encoded = encodeURIComponent(workingObj[key].trim());
+          if (encoded === '') continue;
 
           //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
-          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+          arrayToSignature.push(`${ key }=${ encoded }`.replace(/%20/g, '+'));
         }
         if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
           arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
@@ -201,7 +211,9 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
           if (!Tools.isFunction(workingObj[key].trim)) continue;
-          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
+          let encoded = encodeURIComponent(workingObj[key].trim());
+          if (encoded === '') continue;
+          arrayToSignature.push(`${ key }=${ encoded }`.replace(/%20/g, '+'));
         }
         if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
           arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
