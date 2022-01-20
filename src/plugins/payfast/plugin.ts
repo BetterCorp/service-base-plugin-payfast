@@ -116,8 +116,9 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
 
         let arrayToSignature = [];
         for (let key of Object.keys(workingObj)) {
+          if (Tools.isNullOrUndefined(workingObj[key])) continue;
           //arrayToSignature.push(`${key}=${encodeURIComponent(workingObj[key])}`.replace(/%20/g, '+'));
-          arrayToSignature.push(`${ key }=${ encodeURIComponent(`${workingObj[key] || ''}`.trim()) }`.replace(/%20/g, '+'));
+          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
         }
         if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
           arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
@@ -196,7 +197,8 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
           arrayToSignature.push(`${ key }=${ encodeURIComponent(headers[key]) }`);
         }
         for (let key of Object.keys(workingObj)) {
-          arrayToSignature.push(`${ key }=${ encodeURIComponent(`${workingObj[key] || ''}`.trim()) }`.replace(/%20/g, '+'));
+          if (Tools.isNullOrUndefined(workingObj[key])) continue;
+          arrayToSignature.push(`${ key }=${ encodeURIComponent(workingObj[key].trim()) }`.replace(/%20/g, '+'));
         }
         if (!Tools.isNullOrUndefined(merchantConfig.passphrase)) {
           arrayToSignature.push(`passphrase=${ merchantConfig.passphrase }`);
