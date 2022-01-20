@@ -125,7 +125,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         let arrayToSignature = [];
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
-          if (!Tools.isFunction(workingObj[key].trim)) continue;
+          if (!Tools.isFunction(workingObj[key].trim)) workingObj[key] = `${ workingObj[key] || '' }`;
           let encoded = encodeURIComponent(workingObj[key].trim());
           if (encoded === '') continue;
 
@@ -210,7 +210,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         }
         for (let key of Object.keys(workingObj)) {
           if (Tools.isNullOrUndefined(workingObj[key])) continue;
-          if (!Tools.isFunction(workingObj[key].trim)) continue;
+          if (!Tools.isFunction(workingObj[key].trim)) workingObj[key] = `${ workingObj[key] || '' }`;
           let encoded = encodeURIComponent(workingObj[key].trim());
           if (encoded === '') continue;
           arrayToSignature.push(`${ key }=${ encoded }`.replace(/%20/g, '+'));
