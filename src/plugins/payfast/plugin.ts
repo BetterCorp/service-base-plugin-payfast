@@ -33,17 +33,17 @@ export class payfast extends CPluginClient<any> {
   }
 
   async ping(): Promise<boolean> {
-    return this.emitEventAndReturn(PayFastPluginEvents.ping);
+    return this.emitEventAndReturn(PayFastPluginEvents.ping, 15);
   }
 
   async startPaymentRequest(request: PayfastPaymentRequest): Promise<PayfastPaymentRequestResponse> {
     request.data.sourcePluginName = this._refPluginName;
-    return this.emitEventAndReturn(PayFastPluginEvents.getPaymentRequest, request);
+    return this.emitEventAndReturn(PayFastPluginEvents.getPaymentRequest, request, 15);
   }
 
   async performAdHocPayment(request: PayfastADHocPaymentRequest): Promise<PayfastADHocPaymentRequestResponse> {
     request.data.sourcePluginName = this._refPluginName;
-    return this.emitEventAndReturn(PayFastPluginEvents.performAdHocPayment, request);
+    return this.emitEventAndReturn(PayFastPluginEvents.performAdHocPayment, request, 15);
   }
 
   async onGetSecret(listener: (request?: PayfastGetSecret) => Promise<string>) {
