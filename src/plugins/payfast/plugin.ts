@@ -359,12 +359,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
     });
   }
 
-  private payfast_lastPaymentId: Array<string> = [];
-
   private async ITNPost(req: EXPRESS.Request, res: EXPRESS.Response) {
-    if (this.payfast_lastPaymentId.length > 50) {
-      this.payfast_lastPaymentId.splice(50);
-    }
     try {
       this.log.info('PAYFAST ITN RECEIVED');
       this.log.debug((req as any).data);
