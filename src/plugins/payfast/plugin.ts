@@ -58,14 +58,15 @@ export class payfast extends CPluginClient<any> {
 export class Plugin extends CPlugin<PayfastPluginConfig> {
   express!: express;
 
-  private async ping(resolve: Function) {
+  private async ping(): Promise<boolean> {
     const self = this;
-    Axios.post((await self.getPluginConfig()).liveUrl).then(x => {
-      resolve(x.status === 400);
-    }).catch(x => {
-      self.log.error(x);
-      resolve(false);
-    });
+    return new Promise<boolean>(async (resolve) =>
+      Axios.post((await self.getPluginConfig()).liveUrl).then(x => {
+        resolve(x.status === 400);
+      }).catch(x => {
+        self.log.error(x);
+        resolve(false);
+      }));
   }
 
   private async getPaymentRequest(data: PayfastPaymentRequest) {
@@ -178,6 +179,10 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
       }
 
       try {
+        if (!(await self.ping())) {
+
+        }
+
         let headers: any = {
           "merchant-id": merchantConfig.merchantId,
           "timestamp": new Date().toISOString().split('.')[0],
@@ -300,7 +305,7 @@ export class Plugin extends CPlugin<PayfastPluginConfig> {
         }
       });
 
-      self.onReturnableEvent(null, PayFastPluginEvents.ping, async (a) => await self.ping(a));
+      self.onReturnableEvent(null, PayFastPluginEvents.ping, async () => self.ping());
       self.onReturnableEvent(null, PayFastPluginEvents.getPaymentRequest, (data) => self.getPaymentRequest(data));
       self.onReturnableEvent(null, PayFastPluginEvents.performAdHocPayment, (data) => self.performAdHocPayment(data));
 
