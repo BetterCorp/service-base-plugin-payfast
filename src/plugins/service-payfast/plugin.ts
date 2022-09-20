@@ -128,7 +128,12 @@ export class Service extends ServicesBase<
         });
         let decrypted = Buffer.concat([cipher.update(cipherText), cipher.final()]).toString('utf8');*/
         let decrypted = await eAndD.decrypt(
-          self,
+          (
+            await self.getPluginConfig()
+          ).commsToken,
+          (
+            await self.getPluginConfig()
+          ).commsTokenIV,
           decodeURIComponent(req.params.token)
         );
         let data = JSON.parse(decrypted);
@@ -396,7 +401,12 @@ export class Service extends ServicesBase<
           .digest("hex");
 
         let requestKey = await eAndD.encrypt(
-          self,
+          (
+            await self.getPluginConfig()
+          ).commsToken,
+          (
+            await self.getPluginConfig()
+          ).commsTokenIV,
           JSON.stringify({
             url: client.live
               ? (
